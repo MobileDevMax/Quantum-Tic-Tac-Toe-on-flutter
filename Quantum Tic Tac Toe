@@ -1,0 +1,190 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(QuantumTicTacToe());
+}
+
+class QuantumTicTacToe extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'QuantumTicTacToe',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: GameScreen(),
+    );
+  }
+}
+
+class GameScreen extends StatefulWidget {
+  @override
+  _GameScreenState createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  List<List<List<String>>> board = List.generate(
+    3,
+    (_) => List.generate(3, (_) => List.filled(9, ' ')),
+  );
+  bool isXTurn = true;
+  int moveCount = 0;
+
+  void play(int bigRow, int bigCol, int smallIndex) {
+    setState(() {
+      if (moveCount < 81 && board[bigRow][bigCol][smallIndex] == ' ') {
+        board[bigRow][bigCol][smallIndex] = isXTurn ? 'X' : 'O';
+        moveCount++;
+
+        if (checkWin(isXTurn ? 'X' : 'O')) {
+          _showWinnerDialog(isXTurn ? 'Player 1 (X)' : 'Player 2 (O)');
+        }
+        isXTurn = !isXTurn;
+      }
+    });
+  }
+
+  bool checkWin(String symbol) {
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 3; col++) {
+        if (board[row][col].every((cell) => cell == symbol)) {
+          return true; 
+        }
+        if (board[row].map((b) => b[col]).every((cell) => cell == symbol)) {
+          return true; 
+        }
+      }
+    }
+
+    for (int i = 0; i < 3; i++) {
+      if (board[i][i].every((cell) => cell == symbol)) {
+        return true; 
+      }
+      if (board[i][2 - i].every((cell) => cell == symbol)) {
+        return true; 
+      }
+    }
+
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('QuantumTicTacToe')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              isXTurn ? 'Player 1 turn (X)' : 'Player 2 turn (O)',
+              style: TextStyle(fontSize: 24),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              width: 900, 
+              height: 900,
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3),
+                itemCount: 9,
+                itemBuilder: (context, index) {
+                  int bigRow = index ~/ 3;
+                  int bigCol = index % 3;
+                  return GestureDetector(
+                    onTap: () => _showMiniBoard(bigRow, bigCol),
+                    child: Container(
+                      margin: EdgeInsets.all(4.0),
+                      decoration: BoxDecoration(
+                          border: Border.all(), color: Colors.lightBlueAccent),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(3, (i) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(3, (j) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    board[bigRow][bigCol][i * 3 + j],
+                                    style: TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                );
+                              }),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showWinnerDialog(String winner) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('$winner won!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showMiniBoard(int bigRow, int bigCol) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Select a cell"),
+          content: Container(
+            width: 200,
+            height: 200,
+            child: Column(
+              children: List.generate(3, (i) {
+                return Row(
+                  children: List.generate(3, (j) {
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          play(bigRow, bigCol, i * 3 + j);
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(border: Border.all()),
+                          child: Center(
+                            child: Text(
+                              board[bigRow][bigCol][i * 3 + j],
+                              style: TextStyle(
+                                  fontSize: 40, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                );
+              }),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
